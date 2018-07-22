@@ -18,7 +18,8 @@ const bfx = new BFX({
 });
 
 const ws = bfx.ws();
-const rest = bfx.rest(2);
+// const rest = bfx.rest(2);
+const rest = bfx.rest(1);
 
 ws.on('error', console.error);
 
@@ -29,7 +30,6 @@ BfxTrade = {
     initPairs: function(pairsArray) {
         this.pairs = pairsArray;
         for (pair of pairsArray) {
-
             this.orderbook[pair] = {
                 'bids': {
                     'price': 0,
@@ -70,8 +70,9 @@ BfxTrade = {
     },
 
     getBalance: function (callback) {
-        console.log('resrt', rest, "bfx", bfx)
-        bfx.rest(1).wallet_balances((err, data) => {
+        // console.log('rest', rest, "bfx", bfx)
+        // bfx.rest(1).wallet_balances((err, data) => {
+        rest.wallet_balances((err, data) => {
             console.log('bitfx balance', data);
             if (err) {
                 console.log(err.toString());
@@ -84,8 +85,8 @@ BfxTrade = {
     // min order size much larger on Bitfinex than on Poloniex
     // not implemented for poloniex as not needed
     getMinOrderSize: function(callback) {
-        var self = this
-        rest.symbolDetails((err, data) => {
+        var self = this;
+        rest.symbols_details((err, data) => {
             if (err) {
                 console.log(err.toString());
             } else {
