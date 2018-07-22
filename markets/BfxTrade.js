@@ -1,14 +1,14 @@
 const BFX = require('bitfinex-api-node');
 
 const API_URL = 'https://api.bitfinex.com';
-const { API_KEY, API_SECRET } = require("../keys");
+const { BITFINEX_API_KEY, BITFINEX_API_SECRET } = require("../keys");
 
 
 // API_KEY = "YUVYbh5aEetw6lOhDgRp6c7f0299fglUQyB7bf8kcjV";
 // API_SECRET = "nmIQxt8xpVEpLbk4LyiixCldE1taX67HvBMSl9xgzgb";
 const bfx = new BFX({
-    apiKey: API_KEY,
-    apiSecret: API_SECRET,
+    apiKey: BITFINEX_API_KEY,
+    apiSecret: BITFINEX_API_SECRET,
     url: API_URL,
     ws: {
         autoReconnect: true,
@@ -70,7 +70,9 @@ BfxTrade = {
     },
 
     getBalance: function (callback) {
-        rest.balances((err, data) => {
+        console.log('resrt', rest, "bfx", bfx)
+        bfx.rest(1).wallet_balances((err, data) => {
+            console.log('bitfx balance', data);
             if (err) {
                 console.log(err.toString());
             } else {

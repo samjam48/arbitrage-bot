@@ -73,13 +73,12 @@ function compare(self){
                 // console.log('pairname', bfxKey, poloKey, 'bids', maxBid, 'asks', minAsk);
 
                 // combined fees 0.4% so we check for 0.5% profit to ensure we don't lose money
-                if(maxBid>0 && minAsk>0){
-                // if(maxBid>0 && minAsk>0 && maxBid>minAsk*1.005){
+                // if(maxBid>0 && minAsk>0){ // use this during testing just to see what happens
+                if(maxBid>0 && minAsk>0 && maxBid>minAsk*1.005){
                     bidExchange = bids.indexOf(maxBid)
                     askExchange = asks.indexOf(minAsk)
 
-                    console.log("bidExchange", bidExchange, askExchange);
-
+                    // console.log("bidExchange", bidExchange, askExchange);
 
                     // check bid and ask are on different exchanges
                     if (bidExchange !== askExchange) {
@@ -88,14 +87,16 @@ function compare(self){
                         exchanges[askExchange].mode = 'buy'
                         exchanges[bidExchange].mode = 'sell'
 
-                        var buyPair     = bidExchange = 0 ? poloKey : bfxKey ;
-                        var sellPair    = bidExchange = 0 ?  bfxKey : poloKey ;
+                        var buyPair     = bidExchange == 0 ? poloKey : bfxKey ;
+                        var sellPair    = bidExchange == 0 ?  bfxKey : poloKey ;
 
                         var buyBalance  = balance.getBalance(askExchange, buyPair, exchanges[askExchange].mode)
                         var sellBalance = balance.getBalance(bidExchange, sellPair, exchanges[bidExchange].mode)
 
-                        var tradeAmount = Math.min( exchanges[bidExchange].orderbook.sellPair['bids']['amount'],
-                                                    exchanges[askExchange].orderbook.buyPair['asks']['amount'] )
+                        console.log("buyBalance", buyBalance, "sellBalance", sellBalance);
+
+                        var tradeAmount = Math.min( exchanges[bidExchange].orderbook[sellPair]['bids']['amount'],
+                                                    exchanges[askExchange].orderbook[buyPair]['asks']['amount'] )
                         var limitBalance = Math.min(sellBalance, buyBalance / minAsk)
 
                         console.log('trade amount', tradeAmount);
@@ -122,6 +123,7 @@ function compare(self){
                             // complete callback function to create order of ledgers.
                             // block bot operations until callback success recieved
                             // return bot to normal function once complete
+
                             // exchanges[bidExchange].trade(sellPair, maxBid, tradeAmount, () => {
 
                             // })

@@ -1,10 +1,12 @@
+const { POLONIEX_API_KEY, POLONIEX_API_SECRET } = require("../keys");
+
 const PoloManager = require('poloniex-orderbook');
 const polo = new PoloManager().connect({
     headers: ''
 });
 
 const PoloRest = require('./api/poloniex')
-const polorest = new PoloRest('API_KEY', 'API_SECRET')
+const polorest = new PoloRest(POLONIEX_API_KEY, POLONIEX_API_SECRET)
 
 polo.on('error', err => console.log(err));
 
