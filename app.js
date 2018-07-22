@@ -5,29 +5,34 @@ const balance = require('./markets/Balance');
 const exchanges = [require('./markets/BfxTrade'), require('./markets/PoloTrade')];
 
 const bfxPairs = ['ETHBTC', 'XRPBTC', 'LTCBTC', 'XMRBTC', 'EOSBTC', 'BCHBTC', 'NEOBTC', 'OMGBTC', 'DSHBTC', 'ETCBTC'];
-const poloPairs = ['BTC_ETH', 'BTC_XRP', 'BTC_LTC', 'BTC_XMR', 'BTC_EOS', 'BTC_BCH', 'BTC_NEO', 'BTC_OMG', 'BTCDSH', 'BTC_ETC'];
+const poloPairs = ['BTC_ETH', 'BTC_XRP', 'BTC_LTC', 'BTC_XMR', 'BTC_EOS', 'BTC_BCH', 'BTC_NEO', 'BTC_OMG', 'BTC_DSH', 'BTC_ETC'];
 
-// bfxTrade.initPairs(bfxPairs)
+// exchanges[0].initPairs(bfxPairs)
 
-// bfxTrade.getOrders()
+// exchanges[0].getOrders()
 
-// poloTrade.initPairs(Pairs)
+// console.log(exchanges[0].orderbook);
 
-// poloTrade.getOrders()
+// process.exit();
 
-// console.log(bfxTrade.orderbook);
+// exchanges[1].initPairs(poloPairs)
+
+// exchanges[1].getOrders()
+
+// console.log(exchanges[1].orderbook);
+
 
 var bids = [], asks = [];
-var max = 0, min = 0;
-var bidIndex = -1, askIndex = -1;
+var maxBid = 0, minAsk = 0;
+var bidExchange = -1, askExchange = -1;
 var limits = {};
 
-exchanges[0].initPairs(bfxPairs)
-exchanges[1].initPairs(poloPairs)
+exchanges[0].initPairs(bfxPairs);
+exchanges[1].initPairs(poloPairs);
 
 exchanges[0].getMinOrderSize((data) => {
     limits = data;
-})
+});
 
 for (exchange of exchanges) {
     exchange.getOrders()
@@ -36,7 +41,7 @@ for (exchange of exchanges) {
 var self = this
 
 // NOTE - update at start as can take 2 secs to update and add latency
-// update again after trade to minimise latency
+// update again after trade to minAskimise latency
 // do not use same account for manual trades when bot is live!
 balance.updateBalance(() => {
     setTimeout(() => {
@@ -46,7 +51,7 @@ balance.updateBalance(() => {
         }, 50)
         // console.log('bitfinex', exchanges[0].orderbook);
         // console.log('poloniex', exchanges[1].orderbook);
-    }, 60000);
+    }, 6000);
 })
 
 
@@ -61,33 +66,44 @@ function compare(self){
                 asks.push(exchanges[0].orderbook[bfxKey]['asks']['price'])
                 asks.push(exchanges[1].orderbook[poloKey]['asks']['price'])
 
-                max = Math.max.apply(Math, bids)
-                min = Math.min.apply(Math, asks)
-                console.log('pairname', bfxKey, poloKey, 'bids', max, 'asks', min);
+                // console.log('Pre Math calc - pairname', bfxKey, poloKey, 'bids', bids, 'asks', asks);
+
+                maxBid = Math.max.apply(Math, bids)
+                minAsk = Math.min.apply(Math, asks)
+                // console.log('pairname', bfxKey, poloKey, 'bids', maxBid, 'asks', minAsk);
 
                 // combined fees 0.4% so we check for 0.5% profit to ensure we don't lose money
-                if(max>0 && min>0 && max>min*1.005){
-                    bidIndex = bids.indexOf(max)
-                    askIndex = asks.indexOf(min)
-                    console.log(bidIndex, askIndex);
+                if(maxBid>0 && minAsk>0){
+                // if(maxBid>0 && minAsk>0 && maxBid>minAsk*1.005){
+                    bidExchange = bids.indexOf(maxBid)
+                    askExchange = asks.indexOf(minAsk)
 
-                    // check bid and ask are on different exchagnes
-                    if (bidIndex !== askIndex) {
-                        exchanges[bidIndex].mode = 'sell'
-                        exchanges[askIndex].mode = 'buy'
-                        var buyPair     = bidIndex = 0 ? poloKey : bfxKey ;
-                        var sellPair    = bidIndex = 0 ?  bfxKey : poloKey ;
+                    console.log("bidExchange", bidExchange, askExchange);
 
-                        var buyBalance  = getBalance(askIndex, buyPair, exchanges[askIndex].mode)
-                        var sellBalance = getBalance(bidIndex, sellPair, exchanges[sellIndex].mode)
 
-                        var tradeAmount = Math.min( exchanges[bidIndex].orderbook.sellPair['bids']['amount'],
-                                                    excahanges[askIndex].orderbook.buyPair['asks']['amount'] )
-                        var limitBalance = Math.min(sellBalance, buyBalance / min)
+                    // check bid and ask are on different exchanges
+                    if (bidExchange !== askExchange) {
+                        console.log(bidExchange, askExchange);
 
-                        if(tradeAmount = limitBalance) {
-                            tradeAmount = limitBalance
-                        }
+                        exchanges[askExchange].mode = 'buy'
+                        exchanges[bidExchange].mode = 'sell'
+
+                        var buyPair     = bidExchange = 0 ? poloKey : bfxKey ;
+                        var sellPair    = bidExchange = 0 ?  bfxKey : poloKey ;
+
+                        var buyBalance  = balance.getBalance(askExchange, buyPair, exchanges[askExchange].mode)
+                        var sellBalance = balance.getBalance(bidExchange, sellPair, exchanges[bidExchange].mode)
+
+                        var tradeAmount = Math.min( exchanges[bidExchange].orderbook.sellPair['bids']['amount'],
+                                                    exchanges[askExchange].orderbook.buyPair['asks']['amount'] )
+                        var limitBalance = Math.min(sellBalance, buyBalance / minAsk)
+
+                        console.log('trade amount', tradeAmount);
+                        console.log('limit Balance', limitBalance);
+
+                        // if(tradeAmount == limitBalance) {
+                        //     tradeAmount = limitBalance
+                        // }
 
                         var pairLimit = 0
                         for( key in limits) {
@@ -101,25 +117,25 @@ function compare(self){
                         }
 
                         if (sellBalance >= tradeAmount && buyBalance >= tradeAmount.min) {
-                            console.log('pairname', bfxKey, ' sell on', bidIndex, ' price', max, ' buy on', askIndex, ' price', min);
+                            console.log('pairname', bfxKey, ' sell on', bidExchange, ' price', maxBid, ' buy on', askExchange, ' price', minAsk);
 
                             // complete callback function to create order of ledgers.
                             // block bot operations until callback success recieved
                             // return bot to normal function once complete
-                            exchanges[bidIndex].trade(sellPair, max, tradeAmount, () => {
+                            // exchanges[bidExchange].trade(sellPair, maxBid, tradeAmount, () => {
 
-                            })
+                            // })
 
-                            exchanges[askIndex].trade(buyPair, min, tradeAmount, () => {
+                            // exchanges[askExchange].trade(buyPair, minAsk, tradeAmount, () => {
 
-                            })
+                            // })
                         }
                     }
                 }
                 bids.length = 0
                 asks.length = 0
-                max = 0
-                min = 0
+                maxBid = 0
+                minAsk = 0
             }
         }
     }

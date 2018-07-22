@@ -35,7 +35,10 @@ PoloTrade = {
         polo.on('change', info => {
             self.orderbook[info['channel']][info['side']]['price'] = parseFloat(info['rate'])
             self.orderbook[info['channel']][info['side']]['amount'] = parseFloat(info['amount'])
+        // console.log(self.orderbook);
+
         })
+
     },
 
     getBalance: function(callback) {

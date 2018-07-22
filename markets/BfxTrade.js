@@ -1,9 +1,11 @@
 const BFX = require('bitfinex-api-node');
 
-const API_URL = 'https://api.bitfinex.com'
-const API_KEY = "YUVYbh5aEetw6lOhDgRp6c7f0299fglUQyB7bf8kcjV";
-const API_SECRET = "nmIQxt8xpVEpLbk4LyiixCldE1taX67HvBMSl9xgzgb";
+const API_URL = 'https://api.bitfinex.com';
+const { API_KEY, API_SECRET } = require("../keys");
 
+
+// API_KEY = "YUVYbh5aEetw6lOhDgRp6c7f0299fglUQyB7bf8kcjV";
+// API_SECRET = "nmIQxt8xpVEpLbk4LyiixCldE1taX67HvBMSl9xgzgb";
 const bfx = new BFX({
     apiKey: API_KEY,
     apiSecret: API_SECRET,
@@ -18,7 +20,7 @@ const bfx = new BFX({
 const ws = bfx.ws();
 const rest = bfx.rest(2);
 
-ws.on('error', console.error)
+ws.on('error', console.error);
 
 BfxTrade = {
     pairs: [],
@@ -27,7 +29,7 @@ BfxTrade = {
     initPairs: function(pairsArray) {
         this.pairs = pairsArray;
         for (pair of pairsArray) {
-            
+
             this.orderbook[pair] = {
                 'bids': {
                     'price': 0,
@@ -45,13 +47,13 @@ BfxTrade = {
                 ws.subscribeOrderBook(pair, 'P0', '1')
             }
         })
-        ws.open()
+        ws.open();
     },
 
     getOrders: function() {
         var self = this
         ws.on('orderbook', (pair, book) => {
-            
+
             // if two dimensional array take the first array
             if (book[0].constructor === Array) book = book[0]
 
@@ -59,10 +61,10 @@ BfxTrade = {
                 self.orderbook[pair.substring(1)]['bids']['price']  = book[0]
                 self.orderbook[pair.substring(1)]['bids']['amount'] = book[2]
             } else {
-                self.orderbook[pair.substring(1)]['bids']['price']  = book[0]
-                self.orderbook[pair.substring(1)]['bids']['amount'] = book[2] * -1
+                self.orderbook[pair.substring(1)]['asks']['price']  = book[0]
+                self.orderbook[pair.substring(1)]['asks']['amount'] = book[2] * -1
             }
-            //     console.log(self.orderbook);
+            // console.log(self.orderbook);
 
         })
     },
