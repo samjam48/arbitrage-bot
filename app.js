@@ -38,7 +38,7 @@ balance.updateBalance(() => {
         }, 50)
         // console.log('bitfinex', exchanges[0].orderbook);
         // console.log('poloniex', exchanges[1].orderbook);
-    }, 60000);
+    }, 6000);
 })
 
 
@@ -47,7 +47,7 @@ function compare(self){
     for (bfxKey in exchanges[0].orderbook) {
 
         for (poloKey in exchanges[1].orderbook) {
-            if(matchKeys(bfxKey, poloKey)) {
+            if(checkKeysMatch(bfxKey, poloKey)) {
                 bids.push(exchanges[0].orderbook[bfxKey]['bids']['price'])
                 bids.push(exchanges[1].orderbook[poloKey]['bids']['price'])
                 asks.push(exchanges[0].orderbook[bfxKey]['asks']['price'])
@@ -61,8 +61,8 @@ function compare(self){
 
                 // combined fees 0.4% so we check for 0.5% profit to ensure we don't lose money
                 // if(maxBid>0 && minAsk>0){ // use this during testing just to see what happens
-                // if( maxBid > 0 && minAsk > 0 && maxBid > (minAsk * 1.000001 )){  // test value
-                if(maxBid>0 && minAsk>0 && maxBid>minAsk*1.005){
+                if( maxBid > 0 && minAsk > 0 && maxBid > (minAsk * 1.000001 )){  // test value
+                // if(maxBid>0 && minAsk>0 && maxBid>minAsk*1.005){
                     bidExchange = bids.indexOf(maxBid)
                     askExchange = asks.indexOf(minAsk)
 
@@ -97,17 +97,11 @@ function compare(self){
 
                         var pairLimit = 0;
                         for( key of Object.keys(minOrderLimits) ) {
-                            console.log('key, ', key);
-                            console.log('minOrderLimits, ', minOrderLimits);
-                            console.log('buy pair, ', buyPair);
-                            
-                            // TO DO - Convert currency keys to be the sae format
-                            if ( buyPair == key ) {
+                            if ( standardiseKey(buyPair) == key ) {
                                 pairLimit = minOrderLimits[key]
                                 console.log('New pairLimit =', pairLimit);
                             }
                         }
-                        console.log('pairLimit =', pairLimit);
 
                         if (maxTradeableAmount < pairLimit) {
                             console.log("insufficent funds to trade, ", buyPair);
@@ -143,9 +137,19 @@ function compare(self){
     }
 }
 
-function matchKeys (key1, key2) {
+function standardiseKey (key) {
+    if(key.includes('_')){
+        console.log('key1 has an _ whoop');
+        let convertedkey = key.split('_');
+        return convertedkey.reverse().join('');
+    } else {
+        return key;
+    }
+}
+function checkKeysMatch (key1, key2) {
     return key1.includes(key2.split('_')[1]) ? true : false ;
 }
+
 
 
 
